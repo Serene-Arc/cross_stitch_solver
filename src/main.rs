@@ -10,13 +10,11 @@ fn main() {
     let mut best_sequence: Option<Vec<HalfStitch>> = None;
 
     let now = Instant::now();
-    println!("Beginning search...");
     for perm in csv_reader::read_stitches().filter(|p| stitch::verify_stitches_valid(&p)) {
         let calculated_cost = stitch::get_cost(&perm);
-        println!("Hit");
         if calculated_cost < best_cost {
             best_cost = calculated_cost;
-            best_sequence = Some(perm);
+            best_sequence = Some(perm)
         }
     }
     let elapsed = now.elapsed();

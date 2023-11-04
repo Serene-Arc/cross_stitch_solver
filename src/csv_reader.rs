@@ -31,7 +31,7 @@ pub fn read_stitches() -> affixed_permutations::AffixedPermutations<HalfStitch> 
             inner.push(stitches[1]);
         } else if record.modifier.eq("l") {
             last_stitch = Some(stitches[1]);
-            inner.push(stitches[1]);
+            inner.push(stitches[0]);
         } else if &record.modifier == "lf" || record.modifier.eq("fl") {
             first_stitch = Some(stitches[0]);
             last_stitch = Some(stitches[1]);
