@@ -1,4 +1,4 @@
-use crate::stitch::HalfStitch;
+use rayon::prelude::*;
 use std::time::Instant;
 
 mod affixed_permutations;
@@ -10,29 +10,29 @@ fn main() {
 }
 
 fn brute_force_find() {
-    let mut best_cost: f64 = f64::MAX;
-    let mut best_sequence: Option<Vec<HalfStitch>> = None;
-
     let read_stitches = csv_reader::read_stitches();
 
     let now = Instant::now();
-    for perm in csv_reader::generate_permutations(read_stitches.0, read_stitches.1)
+
+    let best = csv_reader::generate_permutations(read_stitches.0, read_stitches.1)
+        .par_bridge()
         .filter(|p| stitch::verify_stitches_valid(&p))
-    {
-        let calculated_cost = stitch::get_cost(&perm, &read_stitches.2);
-        if calculated_cost < best_cost {
-            best_cost = calculated_cost;
-            best_sequence = Some(perm)
-        }
-    }
+        .min_by(|s1, s2| {
+            stitch::get_cost(s1, &read_stitches.2)
+                .total_cmp(&stitch::get_cost(s2, &read_stitches.2))
+        });
+
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
 
-    println!("Best cost: {}", best_cost);
-    match best_sequence {
-        None => {}
-        Some(s) => {
-            for stitch in s {
+    match best {
+        None => {
+            println!("No best sequence found, uh oh.")
+        }
+        Some(perm) => {
+            let best_cost = stitch::get_cost(&perm, &read_stitches.2);
+            println!("Best cost: {}", best_cost);
+            for stitch in perm {
                 println!("{:?}", stitch);
             }
         }
