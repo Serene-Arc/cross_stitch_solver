@@ -1,5 +1,5 @@
-use crate::affixed_permutations;
-use crate::stitch::{make_full_stitch, HalfStitch};
+use crate::affixed_permutations::PrefixedPermutations;
+use crate::stitch::{make_full_stitch, HalfStitch, Location};
 use serde::Deserialize;
 use std::io;
 
@@ -17,7 +17,7 @@ impl StitchRecord {
     }
 }
 
-pub fn read_stitches() -> affixed_permutations::AffixedPermutations<HalfStitch> {
+pub fn read_stitches() -> (Option<HalfStitch>, Vec<HalfStitch>, Option<Location>) {
     let mut first_stitch: Option<HalfStitch> = None;
     let mut last_stitch: Option<HalfStitch> = None;
     let mut inner: Vec<HalfStitch> = Vec::new();
@@ -40,6 +40,21 @@ pub fn read_stitches() -> affixed_permutations::AffixedPermutations<HalfStitch> 
             inner.push(stitches[1]);
         }
     }
+    let mut final_loc: Option<Location> = None;
+    match last_stitch {
+        None => {}
+        Some(stitch) => {
+            final_loc = Some(stitch.get_end_location());
+            inner.push(stitch);
+        }
+    }
 
-    affixed_permutations::AffixedPermutations::new(first_stitch, last_stitch, inner)
+    (first_stitch, inner, final_loc)
+}
+
+pub fn generate_permutations(
+    first_stitch: Option<HalfStitch>,
+    inner: Vec<HalfStitch>,
+) -> PrefixedPermutations<HalfStitch> {
+    PrefixedPermutations::new(first_stitch, inner)
 }

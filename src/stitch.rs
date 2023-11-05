@@ -25,7 +25,7 @@ impl Location {
 }
 
 impl HalfStitch {
-    fn get_end_location(&self) -> Location {
+    pub fn get_end_location(&self) -> Location {
         if self.facing_right {
             Location::new(self.start.x + 1, self.start.y + 1)
         } else {
@@ -40,13 +40,22 @@ impl HalfStitch {
     }
 }
 
-pub fn get_cost(stitches: &Vec<HalfStitch>) -> f64 {
+pub fn get_cost(stitches: &Vec<HalfStitch>, end_location: &Option<Location>) -> f64 {
     let mut cost: f64 = 0.0;
     for window in stitches.windows(2) {
         cost += window[0]
             .get_end_location()
             .distance_to_location(&window[1].start);
     }
+    match end_location {
+        None => {}
+        Some(loc) => {
+            cost += stitches[stitches.len() - 1]
+                .get_end_location()
+                .distance_to_location(loc);
+        }
+    }
+    // Add cost for each stitch going diagonally
     cost += 2_f64.sqrt() * stitches.len() as f64;
     cost
 }
@@ -132,7 +141,7 @@ mod tests {
     #[test]
     fn test_distance_one_stitch() {
         let test: Vec<HalfStitch> = make_full_stitch(1, 1).to_vec();
-        let result = get_cost(&test);
+        let result = get_cost(&test, &None);
         let expected: f64 = (2.0 * 2.0_f64.sqrt()) + 1.0;
         assert_eq!(result, expected);
     }
@@ -140,7 +149,7 @@ mod tests {
     #[test]
     fn test_distance_two_stitches() {
         let test = [make_full_stitch(1, 1), make_full_stitch(2, 1)].concat();
-        let result = get_cost(&test);
+        let result = get_cost(&test, &None);
         let expected: f64 = (4.0 * 2.0_f64.sqrt()) + 2.0 + 2_f64.sqrt();
         assert_eq!(result, expected);
     }
@@ -153,8 +162,24 @@ mod tests {
             make_full_stitch(3, 1),
         ]
         .concat();
-        let result = get_cost(&test);
+        let result = get_cost(&test, &None);
         let expected: f64 = 3.0 * (2.0 * 2.0_f64.sqrt() + 1.0) + (2.0 * 2_f64.sqrt());
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_distance_one_stitch_different_end() {
+        let test: Vec<HalfStitch> = make_full_stitch(1, 1).to_vec();
+        let result = get_cost(&test, &Some(Location::new(1, 2)));
+        let expected: f64 = (2.0 * 2.0_f64.sqrt()) + 1.0;
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_distance_two_stitches_different_end() {
+        let test = [make_full_stitch(1, 1), make_full_stitch(2, 1)].concat();
+        let result = get_cost(&test, &Some(Location::new(1, 2)));
+        let expected: f64 = (4.0 * 2.0_f64.sqrt()) + 3.0 + 2_f64.sqrt();
         assert_eq!(result, expected);
     }
 
@@ -166,7 +191,7 @@ mod tests {
             HalfStitch::new(Location::new(3, 1), true),
             HalfStitch::new(Location::new(4, 1), true),
         ];
-        let result = get_cost(&test);
+        let result = get_cost(&test, &None);
         let expected: f64 = 4.0 * 2.0_f64.sqrt() + 3.0;
         assert_eq!(result, expected);
     }
