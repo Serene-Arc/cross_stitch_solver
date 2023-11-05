@@ -6,6 +6,10 @@ mod csv_reader;
 mod stitch;
 
 fn main() {
+    brute_force_find();
+}
+
+fn brute_force_find() {
     let mut best_cost: f64 = f64::MAX;
     let mut best_sequence: Option<Vec<HalfStitch>> = None;
 
