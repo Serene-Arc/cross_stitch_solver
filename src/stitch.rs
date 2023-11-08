@@ -1,6 +1,8 @@
+use serde::ser::{SerializeStruct, Serializer};
+use serde::Serialize;
 use std::collections::HashSet;
 
-#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash, Serialize)]
 pub struct Location {
     x: i64,
     y: i64,
@@ -37,6 +39,19 @@ impl HalfStitch {
             start,
             facing_right,
         }
+    }
+}
+
+impl Serialize for HalfStitch {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("HalfStitch", 3)?;
+        state.serialize_field("start_x", &self.start.x)?;
+        state.serialize_field("start_y", &self.start.y)?;
+        state.serialize_field("facing_right", &self.facing_right)?;
+        state.end()
     }
 }
 

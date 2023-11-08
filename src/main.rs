@@ -1,15 +1,53 @@
+use crate::stitch::HalfStitch;
+use clap::{Parser, Subcommand};
 use rayon::prelude::*;
+use std::path::PathBuf;
 use std::time::Instant;
+extern crate piston_window;
+use piston_window::*;
 
 mod affixed_permutations;
 mod csv_reader;
+mod csv_writer;
 mod stitch;
 
-fn main() {
-    brute_force_find();
+#[derive(Parser)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
 }
 
-fn brute_force_find() {
+#[derive(Subcommand)]
+enum Commands {
+    Solve {
+        #[arg(short, long, default_value = "./output.csv")]
+        file: PathBuf,
+    },
+    Visualise {
+        #[arg(short, long, default_value = "./output.gif")]
+        file: PathBuf,
+    },
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    match &cli.command {
+        Some(Commands::Solve { file }) => {
+            let sequence = brute_force_find();
+            csv_writer::write_sequence_to_file(&sequence, file)
+        }
+        Some(Commands::Visualise { file }) => {
+            let mut window: PistonWindow = WindowSettings::new("Hello Piston!", [640, 480])
+                .exit_on_esc(true)
+                .build()
+                .unwrap();
+        }
+        None => {}
+    }
+}
+
+fn brute_force_find() -> Vec<HalfStitch> {
     let read_stitches = csv_reader::read_stitches();
 
     let now = Instant::now();
@@ -25,7 +63,7 @@ fn brute_force_find() {
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
 
-    match best {
+    match &best {
         None => {
             println!("No best sequence found, uh oh.")
         }
@@ -37,4 +75,5 @@ fn brute_force_find() {
             }
         }
     }
+    best.unwrap()
 }
