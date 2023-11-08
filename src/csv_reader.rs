@@ -17,7 +17,7 @@ impl StitchRecord {
     }
 }
 
-pub fn read_stitches() -> (Option<HalfStitch>, Vec<HalfStitch>, Option<Location>) {
+pub fn read_stitches_for_solving() -> (Option<HalfStitch>, Vec<HalfStitch>, Option<Location>) {
     let mut first_stitch: Option<HalfStitch> = None;
     let mut last_stitch: Option<HalfStitch> = None;
     let mut inner: Vec<HalfStitch> = Vec::new();

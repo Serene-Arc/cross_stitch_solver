@@ -35,7 +35,7 @@ fn main() {
     match &cli.command {
         Some(Commands::Solve { file }) => {
             let sequence = brute_force_find();
-            csv_writer::write_sequence_to_file(&sequence, file)
+            csv_writer::write_solved_sequence_to_file(&sequence, file)
         }
         Some(Commands::Visualise { file }) => {
             let mut window: PistonWindow = WindowSettings::new("Hello Piston!", [640, 480])
@@ -48,7 +48,7 @@ fn main() {
 }
 
 fn brute_force_find() -> Vec<HalfStitch> {
-    let read_stitches = csv_reader::read_stitches();
+    let read_stitches = csv_reader::read_stitches_for_solving();
 
     let now = Instant::now();
 
