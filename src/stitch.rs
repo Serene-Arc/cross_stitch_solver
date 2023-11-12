@@ -1,7 +1,8 @@
+use serde::de::{self, Deserializer, MapAccess, SeqAccess, Visitor};
 use serde::ser::{SerializeStruct, Serializer};
-use serde::Deserializer;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::fmt;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct Location {
@@ -49,20 +50,25 @@ impl Serialize for HalfStitch {
         S: Serializer,
     {
         let mut state = serializer.serialize_struct("HalfStitch", 3)?;
-        state.serialize_field("start_x", &self.start.x)?;
-        state.serialize_field("start_y", &self.start.y)?;
-        state.serialize_field("facing_right", &self.facing_right)?;
+        state.serialize_field("StartX", &self.start.x)?;
+        state.serialize_field("StartY", &self.start.y)?;
+        state.serialize_field("FacingRight", &self.facing_right)?;
         state.end()
     }
 }
 
 impl<'de> Deserialize<'de> for HalfStitch {
-    fn deserialize<D>(deserializer: D) -> Result<HalfStitch, D::Error>
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        use serde::de::Visitor;
-        use std::fmt;
+        #[derive(Deserialize)]
+        #[serde(field_identifier)]
+        enum Field {
+            StartX,
+            StartY,
+            FacingRight,
+        }
 
         struct HalfStitchVisitor;
 
@@ -73,46 +79,68 @@ impl<'de> Deserialize<'de> for HalfStitch {
                 formatter.write_str("struct HalfStitch")
             }
 
-            fn visit_map<V>(self, mut map: V) -> Result<HalfStitch, V::Error>
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
             where
-                V: serde::de::MapAccess<'de>,
+                A: SeqAccess<'de>,
             {
-                let mut start: Option<Location> = None;
-                let mut facing_right: Option<bool> = None;
+                let start_x = seq
+                    .next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let start_y = seq
+                    .next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                let facing_right = seq
+                    .next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                Ok(HalfStitch::new(
+                    Location::new(start_x, start_y),
+                    facing_right,
+                ))
+            }
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
+                let mut start_x = None;
+                let mut start_y = None;
+                let mut facing_right = None;
+
                 while let Some(key) = map.next_key()? {
                     match key {
-                        "start" => {
-                            if start.is_some() {
-                                return Err(de::Error::duplicate_field("start"));
+                        Field::StartX => {
+                            if start_x.is_some() {
+                                return Err(de::Error::duplicate_field("start_x"));
                             }
-                            start = Some(map.next_value()?);
+                            start_x = Some(map.next_value()?);
                         }
-                        "facing_right" => {
+                        Field::StartY => {
+                            if start_y.is_some() {
+                                return Err(de::Error::duplicate_field("start_y"));
+                            }
+                            start_y = Some(map.next_value()?);
+                        }
+                        Field::FacingRight => {
                             if facing_right.is_some() {
                                 return Err(de::Error::duplicate_field("facing_right"));
                             }
                             facing_right = Some(map.next_value()?);
                         }
-                        _ => {
-                            return Err(de::Error::unknown_field(key, FIELDS));
-                        }
                     }
                 }
-                let start = start.ok_or_else(|| de::Error::missing_field("start"))?;
+                let start_x = start_x.ok_or_else(|| de::Error::missing_field("start_x"))?;
+                let start_y = start_y.ok_or_else(|| de::Error::missing_field("start_y"))?;
                 let facing_right =
                     facing_right.ok_or_else(|| de::Error::missing_field("facing_right"))?;
-                Ok(HalfStitch {
-                    start,
+                Ok(HalfStitch::new(
+                    Location::new(start_x, start_y),
                     facing_right,
-                })
+                ))
             }
         }
-
-        const FIELDS: &'static [&'static str] = &["start", "facing_right"];
+        const FIELDS: &'static [&'static str] = &["start_x", "start_y", "facing_right"];
         deserializer.deserialize_struct("HalfStitch", FIELDS, HalfStitchVisitor)
     }
 }
-
 pub fn get_cost(stitches: &Vec<HalfStitch>, end_location: &Option<Location>) -> f64 {
     let mut cost: f64 = 0.0;
     for window in stitches.windows(2) {
@@ -300,4 +328,7 @@ mod tests {
         let result = verify_stitches_valid(&test);
         assert_eq!(result, false);
     }
+
+    #[test]
+    fn test_deserialise_half_stitch_from_map() {}
 }
