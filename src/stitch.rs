@@ -5,14 +5,14 @@ use std::collections::HashSet;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct Location {
-    x: i64,
-    y: i64,
+    pub x: i64,
+    pub y: i64,
 }
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
 pub struct HalfStitch {
     // the start is the base of the stitch, wherever that is.
-    start: Location,
+    pub start: Location,
     facing_right: bool,
 }
 

@@ -60,7 +60,25 @@ pub fn read_stitches_for_visualisation() -> Vec<HalfStitch> {
         let record: HalfStitch = result.unwrap();
         out.push(record);
     }
-    out
+    normalize_half_stitch_vec(out)
+}
+
+fn normalize_half_stitch_vec(stitches: Vec<HalfStitch>) -> Vec<HalfStitch> {
+    if stitches.is_empty() {
+        return stitches;
+    }
+
+    let min_x = stitches.iter().map(|stitch| stitch.start.x).min().unwrap();
+    let min_y = stitches.iter().map(|stitch| stitch.start.y).min().unwrap();
+
+    stitches
+        .into_iter()
+        .map(|mut stitch| {
+            stitch.start.x -= min_x;
+            stitch.start.y -= min_y;
+            stitch
+        })
+        .collect()
 }
 
 pub fn generate_permutations(
@@ -68,4 +86,113 @@ pub fn generate_permutations(
     inner: Vec<HalfStitch>,
 ) -> PrefixedPermutations<HalfStitch> {
     PrefixedPermutations::new(first_stitch, inner)
+}
+
+#[cfg(test)]
+mod test {
+    use crate::csv_reader::normalize_half_stitch_vec;
+    use crate::stitch::{HalfStitch, Location};
+
+    #[test]
+    fn test_normalise_single_stitch_positive() {
+        let test = vec![HalfStitch::new(Location::new(1, 1), true)];
+        let result = normalize_half_stitch_vec(test);
+        assert_eq!(result[0].start, Location::new(0, 0))
+    }
+
+    #[test]
+    fn test_normalise_single_stitch_positive_uneven() {
+        let test = vec![HalfStitch::new(Location::new(112, 324), true)];
+        let result = normalize_half_stitch_vec(test);
+        assert_eq!(result[0].start, Location::new(0, 0))
+    }
+
+    #[test]
+    fn test_normalise_single_stitch_negative_x() {
+        let test = vec![HalfStitch::new(Location::new(-1, 1), true)];
+        let result = normalize_half_stitch_vec(test);
+        assert_eq!(result[0].start, Location::new(0, 0))
+    }
+
+    #[test]
+    fn test_normalise_single_stitch_negative_y() {
+        let test = vec![HalfStitch::new(Location::new(1, -1), true)];
+        let result = normalize_half_stitch_vec(test);
+        assert_eq!(result[0].start, Location::new(0, 0))
+    }
+
+    #[test]
+    fn test_normalise_single_stitch_negative_x_y() {
+        let test = vec![HalfStitch::new(Location::new(-1, -1), true)];
+        let result = normalize_half_stitch_vec(test);
+        assert_eq!(result[0].start, Location::new(0, 0))
+    }
+
+    #[test]
+    fn test_normalise_two_stitches_positive() {
+        let test = vec![
+            HalfStitch::new(Location::new(1, 1), true),
+            HalfStitch::new(Location::new(2, 1), true),
+        ];
+        let result = normalize_half_stitch_vec(test);
+        assert_eq!(result[0].start, Location::new(0, 0));
+        assert_eq!(result[1].start, Location::new(1, 0));
+    }
+
+    #[test]
+    fn test_normalise_two_stitches_positive_uneven() {
+        let test = vec![
+            HalfStitch::new(Location::new(438, 121), true),
+            HalfStitch::new(Location::new(439, 121), true),
+        ];
+        let result = normalize_half_stitch_vec(test);
+        assert_eq!(result[0].start, Location::new(0, 0));
+        assert_eq!(result[1].start, Location::new(1, 0));
+    }
+
+    #[test]
+    fn test_normalise_two_stitches_negative_x() {
+        let test = vec![
+            HalfStitch::new(Location::new(-2, 1), true),
+            HalfStitch::new(Location::new(-1, 1), true),
+        ];
+        let result = normalize_half_stitch_vec(test);
+        assert_eq!(result[0].start, Location::new(0, 0));
+        assert_eq!(result[1].start, Location::new(1, 0));
+    }
+
+    #[test]
+    fn test_normalise_two_stitches_negative_y() {
+        let test = vec![
+            HalfStitch::new(Location::new(1, -1), true),
+            HalfStitch::new(Location::new(2, -1), true),
+        ];
+        let result = normalize_half_stitch_vec(test);
+        assert_eq!(result[0].start, Location::new(0, 0));
+        assert_eq!(result[1].start, Location::new(1, 0));
+    }
+
+    #[test]
+    fn test_normalise_two_stitches_negative_x_y() {
+        let test = vec![
+            HalfStitch::new(Location::new(-2, -1), true),
+            HalfStitch::new(Location::new(-1, -1), true),
+        ];
+        let result = normalize_half_stitch_vec(test);
+        assert_eq!(result[0].start, Location::new(0, 0));
+        assert_eq!(result[1].start, Location::new(1, 0));
+    }
+
+    #[test]
+    fn test_normalise_three_stitches_triangle() {
+        let test = vec![
+            HalfStitch::new(Location::new(1, 1), true),
+            HalfStitch::new(Location::new(2, 2), true),
+            HalfStitch::new(Location::new(3, 1), true),
+        ];
+        let result = normalize_half_stitch_vec(test);
+        assert_eq!(result[0].start, Location::new(0, 0));
+        assert_eq!(result[1].start, Location::new(1, 1));
+        assert_eq!(result[2].start, Location::new(2, 0));
+    }
 }
