@@ -1,6 +1,14 @@
 use crate::stitch::HalfStitch;
 use clap::{Parser, Subcommand};
+use gif::Encoder;
+use gif::Frame;
+use gif::Repeat;
+use image::imageops::flip_vertical;
+use image::{Rgb, RgbaImage};
+use imageproc::definitions::{HasBlack, HasWhite};
+use imageproc::drawing::draw_line_segment_mut;
 use rayon::prelude::*;
+use std::fs::File;
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -19,11 +27,11 @@ struct Cli {
 enum Commands {
     Solve {
         #[arg(short, long, default_value = "./output.csv")]
-        file: PathBuf,
+        output_file: PathBuf,
     },
     Visualise {
         #[arg(short, long, default_value = "./output.gif")]
-        file: PathBuf,
+        output_file: PathBuf,
     },
 }
 
@@ -31,11 +39,74 @@ fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
-        Some(Commands::Solve { file }) => {
+        Some(Commands::Solve { output_file }) => {
             let sequence = brute_force_find();
-            csv_writer::write_solved_sequence_to_file(&sequence, file)
+            csv_writer::write_solved_sequence_to_file(&sequence, output_file)
         }
-        Some(Commands::Visualise { file }) => {}
+        Some(Commands::Visualise { output_file }) => {
+            let stitches = csv_reader::read_stitches_for_visualisation();
+            let max_x = &stitches.iter().map(|s| s.start.x).max().unwrap();
+            let max_y = &stitches.iter().map(|s| s.start.y).max().unwrap();
+            let width = ((max_x * 5) + 10) as u32;
+            let height = ((max_y * 5) + 10) as u32;
+            let black = image::Rgba([0, 0, 0, 255]);
+            let mut img =
+                RgbaImage::from_fn(width, height, |_, _| image::Rgba([255, 255, 255, 255]));
+
+            // Make the stitch points black
+            for stitch in &stitches {
+                img.put_pixel(
+                    (stitch.start.x * 5 + 3) as u32,
+                    (stitch.start.y * 5 + 3) as u32,
+                    black,
+                );
+                img.put_pixel(
+                    (stitch.get_end_location().x * 5 + 3) as u32,
+                    (stitch.get_end_location().y * 5 + 3) as u32,
+                    black,
+                );
+            }
+
+            let color_map = &[0xFF, 0xFF, 0xFF, 0, 0, 0];
+            let mut encoder = Encoder::new(
+                File::create(output_file).unwrap(),
+                width as u16,
+                height as u16,
+                color_map,
+            )
+            .unwrap();
+            encoder.set_repeat(Repeat::Infinite).unwrap();
+
+            let starting_frame = Frame::from_rgba_speed(
+                width as u16,
+                height as u16,
+                &mut flip_vertical(&img).as_raw().clone(),
+                30,
+            );
+            encoder.write_frame(&starting_frame).unwrap();
+
+            for stitch in stitches {
+                draw_line_segment_mut(
+                    &mut img,
+                    (
+                        (stitch.start.x * 5 + 3) as f32,
+                        (stitch.start.y * 5 + 3) as f32,
+                    ),
+                    (
+                        (stitch.get_end_location().x * 5 + 3) as f32,
+                        (stitch.get_end_location().y * 5 + 3) as f32,
+                    ),
+                    black,
+                );
+                let mut frame = Frame::from_rgba(
+                    width as u16,
+                    height as u16,
+                    &mut flip_vertical(&img).as_raw().clone(),
+                );
+                frame.delay = 50;
+                encoder.write_frame(&frame).unwrap();
+            }
+        }
         None => {}
     }
 }
