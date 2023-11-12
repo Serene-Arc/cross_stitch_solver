@@ -1,8 +1,9 @@
 use serde::ser::{SerializeStruct, Serializer};
-use serde::Serialize;
+use serde::Deserializer;
+use serde::{de, Deserialize, Serialize};
 use std::collections::HashSet;
 
-#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash, Serialize)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct Location {
     x: i64,
     y: i64,
@@ -52,6 +53,63 @@ impl Serialize for HalfStitch {
         state.serialize_field("start_y", &self.start.y)?;
         state.serialize_field("facing_right", &self.facing_right)?;
         state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for HalfStitch {
+    fn deserialize<D>(deserializer: D) -> Result<HalfStitch, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::Visitor;
+        use std::fmt;
+
+        struct HalfStitchVisitor;
+
+        impl<'de> Visitor<'de> for HalfStitchVisitor {
+            type Value = HalfStitch;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct HalfStitch")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<HalfStitch, V::Error>
+            where
+                V: serde::de::MapAccess<'de>,
+            {
+                let mut start: Option<Location> = None;
+                let mut facing_right: Option<bool> = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        "start" => {
+                            if start.is_some() {
+                                return Err(de::Error::duplicate_field("start"));
+                            }
+                            start = Some(map.next_value()?);
+                        }
+                        "facing_right" => {
+                            if facing_right.is_some() {
+                                return Err(de::Error::duplicate_field("facing_right"));
+                            }
+                            facing_right = Some(map.next_value()?);
+                        }
+                        _ => {
+                            return Err(de::Error::unknown_field(key, FIELDS));
+                        }
+                    }
+                }
+                let start = start.ok_or_else(|| de::Error::missing_field("start"))?;
+                let facing_right =
+                    facing_right.ok_or_else(|| de::Error::missing_field("facing_right"))?;
+                Ok(HalfStitch {
+                    start,
+                    facing_right,
+                })
+            }
+        }
+
+        const FIELDS: &'static [&'static str] = &["start", "facing_right"];
+        deserializer.deserialize_struct("HalfStitch", FIELDS, HalfStitchVisitor)
     }
 }
 

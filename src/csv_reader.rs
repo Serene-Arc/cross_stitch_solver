@@ -52,6 +52,17 @@ pub fn read_stitches_for_solving() -> (Option<HalfStitch>, Vec<HalfStitch>, Opti
     (first_stitch, inner, final_loc)
 }
 
+pub fn read_stitches_for_visualisation() -> Vec<HalfStitch> {
+    let mut out = Vec::new();
+
+    let mut reader = csv::Reader::from_reader(io::stdin());
+    for result in reader.deserialize() {
+        let record: HalfStitch = result.unwrap();
+        out.push(record);
+    }
+    out
+}
+
 pub fn generate_permutations(
     first_stitch: Option<HalfStitch>,
     inner: Vec<HalfStitch>,

@@ -3,8 +3,6 @@ use clap::{Parser, Subcommand};
 use rayon::prelude::*;
 use std::path::PathBuf;
 use std::time::Instant;
-extern crate piston_window;
-use piston_window::*;
 
 mod affixed_permutations;
 mod csv_reader;
@@ -37,12 +35,7 @@ fn main() {
             let sequence = brute_force_find();
             csv_writer::write_solved_sequence_to_file(&sequence, file)
         }
-        Some(Commands::Visualise { file }) => {
-            let mut window: PistonWindow = WindowSettings::new("Hello Piston!", [640, 480])
-                .exit_on_esc(true)
-                .build()
-                .unwrap();
-        }
+        Some(Commands::Visualise { file }) => {}
         None => {}
     }
 }
