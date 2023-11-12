@@ -34,6 +34,10 @@ enum Commands {
     },
 }
 
+fn calculate_offset(number: i64) -> i64 {
+    number * 10 + 5
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -44,10 +48,18 @@ fn main() {
         }
         Some(Commands::Visualise { output_file }) => {
             let stitches = csv_reader::read_stitches_for_visualisation();
-            let max_x = &stitches.iter().map(|s| s.start.x).max().unwrap();
-            let max_y = &stitches.iter().map(|s| s.start.y).max().unwrap();
-            let width = ((max_x * 5) + 10) as u32;
-            let height = ((max_y * 5) + 10) as u32;
+            let max_x = (&stitches)
+                .iter()
+                .map(|s| s.get_end_location().x)
+                .max()
+                .unwrap();
+            let max_y = (&stitches)
+                .iter()
+                .map(|s| s.get_end_location().y)
+                .max()
+                .unwrap();
+            let width = (calculate_offset(max_x) + 5) as u32;
+            let height = (calculate_offset(max_y) + 5) as u32;
             let black = image::Rgba([0, 0, 0, 255]);
             let mut img =
                 RgbaImage::from_fn(width, height, |_, _| image::Rgba([255, 255, 255, 255]));
@@ -55,13 +67,13 @@ fn main() {
             // Make the stitch points black
             for stitch in &stitches {
                 img.put_pixel(
-                    (stitch.start.x * 5 + 3) as u32,
-                    (stitch.start.y * 5 + 3) as u32,
+                    calculate_offset(stitch.start.x) as u32,
+                    calculate_offset(stitch.start.y) as u32,
                     black,
                 );
                 img.put_pixel(
-                    (stitch.get_end_location().x * 5 + 3) as u32,
-                    (stitch.get_end_location().y * 5 + 3) as u32,
+                    calculate_offset(stitch.get_end_location().x) as u32,
+                    calculate_offset(stitch.get_end_location().y) as u32,
                     black,
                 );
             }
@@ -88,12 +100,12 @@ fn main() {
                 draw_line_segment_mut(
                     &mut img,
                     (
-                        (stitch.start.x * 5 + 3) as f32,
-                        (stitch.start.y * 5 + 3) as f32,
+                        calculate_offset(stitch.start.x) as f32,
+                        calculate_offset(stitch.start.y) as f32,
                     ),
                     (
-                        (stitch.get_end_location().x * 5 + 3) as f32,
-                        (stitch.get_end_location().y * 5 + 3) as f32,
+                        calculate_offset(stitch.get_end_location().x) as f32,
+                        calculate_offset(stitch.get_end_location().y) as f32,
                     ),
                     black,
                 );
