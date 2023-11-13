@@ -1,11 +1,13 @@
 use crate::stitch::HalfStitch;
 use clap::{Parser, Subcommand};
+use factorial::Factorial;
 use gif::Encoder;
 use gif::Frame;
 use gif::Repeat;
 use image::imageops::flip_vertical;
 use image::RgbaImage;
 use imageproc::drawing::draw_line_segment_mut;
+use indicatif::{ParallelProgressIterator, ProgressStyle};
 use rayon::prelude::*;
 use std::fs::File;
 use std::path::PathBuf;
@@ -124,11 +126,17 @@ fn main() {
 
 fn brute_force_find() -> Vec<HalfStitch> {
     let read_stitches = csv_reader::read_stitches_for_solving();
+    let number_of_stitches: u128 = (&read_stitches).1.len() as u128;
 
     let now = Instant::now();
 
     let best = csv_reader::generate_permutations(read_stitches.0, read_stitches.1)
         .par_bridge()
+        .progress_count(number_of_stitches.factorial() as u64)
+        .with_style(
+            ProgressStyle::with_template("[{elapsed_precise}] {wide_bar} {human_pos}/{human_len} ({percent}%) [{eta_precise}]")
+                .unwrap(),
+        )
         .filter(|p| stitch::verify_stitches_valid(&p))
         .min_by(|s1, s2| {
             stitch::get_cost(s1, &read_stitches.2)
