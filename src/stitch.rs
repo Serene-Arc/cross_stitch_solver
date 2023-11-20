@@ -330,5 +330,28 @@ mod tests {
     }
 
     #[test]
-    fn test_deserialise_half_stitch_from_map() {}
+    fn test_check_stitches_valid_kick() {
+        let test = vec![
+            HalfStitch::new(Location::new(1, 1), true),
+            HalfStitch::new(Location::new(2, 1), false),
+            HalfStitch::new(Location::new(2, 2), true),
+            HalfStitch::new(Location::new(3, 2), false),
+        ];
+        let result = verify_stitches_valid(&test);
+        assert_eq!(result, false);
+    }
+
+    #[test]
+    fn test_check_stitches_valid_row_kick() {
+        let test = vec![
+            HalfStitch::new(Location::new(1, 1), true),
+            HalfStitch::new(Location::new(2, 1), false),
+            HalfStitch::new(Location::new(2, 1), true),
+            HalfStitch::new(Location::new(3, 1), false),
+            HalfStitch::new(Location::new(2, 2), true),
+            HalfStitch::new(Location::new(3, 2), false),
+        ];
+        let result = verify_stitches_valid(&test);
+        assert_eq!(result, false);
+    }
 }
