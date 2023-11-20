@@ -41,3 +41,22 @@ impl<T: Clone + Hash + PartialEq + Eq> Iterator for PrefixedPermutations<T> {
         }
     }
 }
+#[cfg(test)]
+mod test {
+    use crate::csv_reader::generate_permutations;
+    use crate::stitch::{HalfStitch, Location};
+
+    #[test]
+    fn test_permutation_generation_first_element_consistent() {
+        let first = HalfStitch::new(Location::new(1, 1), true);
+        let test = vec![
+            HalfStitch::new(Location::new(2, 2), true),
+            HalfStitch::new(Location::new(3, 1), true),
+            HalfStitch::new(Location::new(4, 1), true),
+        ];
+        let perms = generate_permutations(Some(first), test);
+        for p in perms {
+            assert_eq!(p[0], first);
+        }
+    }
+}
