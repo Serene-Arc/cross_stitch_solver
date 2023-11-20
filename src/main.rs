@@ -34,6 +34,7 @@ enum Commands {
         #[arg(short, long, default_value = "./output.gif")]
         output_file: PathBuf,
     },
+    Calculate {},
 }
 
 fn calculate_offset(number: i64) -> i64 {
@@ -119,6 +120,11 @@ fn main() {
                 frame.delay = 50;
                 encoder.write_frame(&frame).unwrap();
             }
+        }
+        Some(Commands::Calculate {}) => {
+            let stitches = csv_reader::read_stitches_for_visualisation();
+            let cost = stitch::get_cost(&stitches, &None);
+            println!("Total Cost: {}", cost);
         }
         None => {}
     }
