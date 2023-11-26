@@ -200,6 +200,7 @@ pub fn make_full_stitch(x: i64, y: i64) -> [HalfStitch; 2] {
 #[cfg(test)]
 mod tests {
     use crate::stitch::{get_cost, make_full_stitch, verify_stitches_valid, HalfStitch, Location};
+    use crate::test_sequences::test_var_valid_sequence_kick;
 
     #[test]
     fn test_end_half_stitch_end_location_right() {
@@ -353,5 +354,11 @@ mod tests {
         ];
         let result = verify_stitches_valid(&test);
         assert_eq!(result, false);
+    }
+
+    #[test]
+    fn test_check_stitches_valid_row_kick_2() {
+        let result = verify_stitches_valid(&test_var_valid_sequence_kick());
+        assert_eq!(result, true);
     }
 }

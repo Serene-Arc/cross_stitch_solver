@@ -45,6 +45,7 @@ impl<T: Clone + Hash + PartialEq + Eq> Iterator for PrefixedPermutations<T> {
 mod test {
     use crate::csv_reader::generate_permutations;
     use crate::stitch::{make_full_stitch, HalfStitch, Location};
+    use crate::test_sequences::test_var_valid_sequence_kick;
 
     #[test]
     fn test_permutation_generation_first_element_consistent() {
@@ -111,14 +112,7 @@ mod test {
         .concat();
         let perms = generate_permutations(None, test.clone());
 
-        let expected = vec![
-            HalfStitch::new(Location::new(1, 1), true),
-            HalfStitch::new(Location::new(2, 1), true),
-            HalfStitch::new(Location::new(3, 1), false),
-            HalfStitch::new(Location::new(3, 2), true),
-            HalfStitch::new(Location::new(4, 2), false),
-            HalfStitch::new(Location::new(2, 1), false),
-        ];
+        let expected = test_var_valid_sequence_kick();
         let mut found = false;
         for perm in perms {
             if perm == expected {

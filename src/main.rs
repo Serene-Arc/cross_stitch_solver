@@ -17,6 +17,8 @@ mod affixed_permutations;
 mod csv_reader;
 mod csv_writer;
 mod stitch;
+#[cfg(test)]
+mod test_sequences;
 
 #[derive(Parser)]
 struct Cli {
