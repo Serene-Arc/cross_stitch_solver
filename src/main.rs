@@ -5,7 +5,7 @@ use gif::Encoder;
 use gif::Frame;
 use gif::Repeat;
 use image::imageops::flip_vertical;
-use image::RgbaImage;
+use image::{ImageBuffer, Rgba, RgbaImage};
 use imageproc::drawing::draw_line_segment_mut;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use rayon::prelude::*;
@@ -52,6 +52,7 @@ fn main() {
             csv_writer::write_solved_sequence_to_file(&sequence, output_file)
         }
         Some(Commands::Visualise { output_file }) => {
+            // Setup some starting variables for the canvas
             let stitches = csv_reader::read_stitches_for_visualisation();
             let max_x = (&stitches)
                 .iter()
@@ -65,24 +66,12 @@ fn main() {
                 .unwrap();
             let width = (calculate_offset(max_x) + 5) as u32;
             let height = (calculate_offset(max_y) + 5) as u32;
-            let black = image::Rgba([0, 0, 0, 255]);
-            let mut img =
-                RgbaImage::from_fn(width, height, |_, _| image::Rgba([255, 255, 255, 255]));
+            let black = Rgba([0, 0, 0, 255]);
 
-            // Make the stitch points black
-            for stitch in &stitches {
-                img.put_pixel(
-                    calculate_offset(stitch.start.x) as u32,
-                    calculate_offset(stitch.start.y) as u32,
-                    black,
-                );
-                img.put_pixel(
-                    calculate_offset(stitch.get_end_location().x) as u32,
-                    calculate_offset(stitch.get_end_location().y) as u32,
-                    black,
-                );
-            }
+            // Make the background/first frame
+            let mut img = make_background_with_stitch_points(&stitches, width, height, black);
 
+            // Set up the gif encoder
             let color_map = &[0xFF, 0xFF, 0xFF, 0, 0, 0];
             let mut encoder = Encoder::new(
                 File::create(output_file).unwrap(),
@@ -93,6 +82,7 @@ fn main() {
             .unwrap();
             encoder.set_repeat(Repeat::Infinite).unwrap();
 
+            // Encode the first frame
             let starting_frame = Frame::from_rgba_speed(
                 width as u16,
                 height as u16,
@@ -101,27 +91,8 @@ fn main() {
             );
             encoder.write_frame(&starting_frame).unwrap();
 
-            for stitch in stitches {
-                draw_line_segment_mut(
-                    &mut img,
-                    (
-                        calculate_offset(stitch.start.x) as f32,
-                        calculate_offset(stitch.start.y) as f32,
-                    ),
-                    (
-                        calculate_offset(stitch.get_end_location().x) as f32,
-                        calculate_offset(stitch.get_end_location().y) as f32,
-                    ),
-                    black,
-                );
-                let mut frame = Frame::from_rgba(
-                    width as u16,
-                    height as u16,
-                    &mut flip_vertical(&img).as_raw().clone(),
-                );
-                frame.delay = 50;
-                encoder.write_frame(&frame).unwrap();
-            }
+            // Animate the stitches being drawn
+            draw_stitches(stitches, width, height, black, &mut img, &mut encoder);
         }
         Some(Commands::Calculate {}) => {
             let stitches = csv_reader::read_stitches_for_visualisation();
@@ -130,6 +101,61 @@ fn main() {
         }
         None => {}
     }
+}
+
+fn draw_stitches(
+    stitches: Vec<HalfStitch>,
+    width: u32,
+    height: u32,
+    black: Rgba<u8>,
+    img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>,
+    encoder: &mut Encoder<File>,
+) {
+    for stitch in stitches {
+        draw_line_segment_mut(
+            img,
+            (
+                calculate_offset(stitch.start.x) as f32,
+                calculate_offset(stitch.start.y) as f32,
+            ),
+            (
+                calculate_offset(stitch.get_end_location().x) as f32,
+                calculate_offset(stitch.get_end_location().y) as f32,
+            ),
+            black,
+        );
+        let mut frame = Frame::from_rgba(
+            width as u16,
+            height as u16,
+            &mut flip_vertical(img).as_raw().clone(),
+        );
+        frame.delay = 50;
+        encoder.write_frame(&frame).unwrap();
+    }
+}
+
+fn make_background_with_stitch_points(
+    stitches: &Vec<HalfStitch>,
+    width: u32,
+    height: u32,
+    black: Rgba<u8>,
+) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+    let mut img = RgbaImage::from_fn(width, height, |_, _| Rgba([255, 255, 255, 255]));
+
+    // Make the stitch points black
+    for stitch in stitches {
+        img.put_pixel(
+            calculate_offset(stitch.start.x) as u32,
+            calculate_offset(stitch.start.y) as u32,
+            black,
+        );
+        img.put_pixel(
+            calculate_offset(stitch.get_end_location().x) as u32,
+            calculate_offset(stitch.get_end_location().y) as u32,
+            black,
+        );
+    }
+    img
 }
 
 fn brute_force_find() -> Vec<HalfStitch> {
