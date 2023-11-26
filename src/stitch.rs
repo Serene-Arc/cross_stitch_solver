@@ -179,7 +179,7 @@ pub fn verify_stitches_valid(stitches: &Vec<HalfStitch>) -> bool {
         }
 
         if !window[0].facing_right {
-            let bottom_stitch_location = Location::new(window[0].start.x - 1, window[1].start.y);
+            let bottom_stitch_location = Location::new(window[0].start.x - 1, window[0].start.y);
             if !past_right_stitches.contains(&bottom_stitch_location) {
                 return false;
             }
@@ -339,21 +339,21 @@ mod tests {
             HalfStitch::new(Location::new(3, 2), false),
         ];
         let result = verify_stitches_valid(&test);
-        assert_eq!(result, false);
+        assert_eq!(result, true);
     }
 
     #[test]
     fn test_check_stitches_valid_row_kick() {
         let test = vec![
-            HalfStitch::new(Location::new(1, 1), true),
-            HalfStitch::new(Location::new(2, 1), false),
-            HalfStitch::new(Location::new(2, 1), true),
-            HalfStitch::new(Location::new(3, 1), false),
-            HalfStitch::new(Location::new(2, 2), true),
-            HalfStitch::new(Location::new(3, 2), false),
+            HalfStitch::new(Location::new(1, 1), true),  // ends 2,2
+            HalfStitch::new(Location::new(2, 1), false), // ends 1,2
+            HalfStitch::new(Location::new(2, 1), true),  // ends 3,2
+            HalfStitch::new(Location::new(3, 1), false), // ends 2,2
+            HalfStitch::new(Location::new(3, 2), true),  // ends 4,3
+            HalfStitch::new(Location::new(4, 2), false), // ends 3,3
         ];
         let result = verify_stitches_valid(&test);
-        assert_eq!(result, false);
+        assert_eq!(result, true);
     }
 
     #[test]
