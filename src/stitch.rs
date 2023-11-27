@@ -278,6 +278,14 @@ mod tests {
     }
 
     #[test]
+    fn test_distance_one_stitch_different_end_long() {
+        let test: Vec<HalfStitch> = make_full_stitch(1, 1).to_vec();
+        let result = get_cost(&test, &Some(Location::new(10, 2)));
+        let expected: f64 = (2.0 * 2.0_f64.sqrt()) + 10.0;
+        assert_eq!(result, expected);
+    }
+
+    #[test]
     fn test_distance_two_stitches_different_end() {
         let test = [make_full_stitch(1, 1), make_full_stitch(2, 1)].concat();
         let result = get_cost(&test, &Some(Location::new(1, 2)));
