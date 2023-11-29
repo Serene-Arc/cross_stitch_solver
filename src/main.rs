@@ -31,6 +31,8 @@ enum Commands {
     Solve {
         #[arg(short, long, default_value = "./output.csv")]
         output_file: PathBuf,
+        #[arg(short, long, default_value = "bruteforce")]
+        mode: String,
     },
     Visualise {
         #[arg(short, long, default_value = "./output.gif")]
@@ -47,10 +49,13 @@ fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
-        Some(Commands::Solve { output_file }) => {
-            let sequence = brute_force_find();
-            csv_writer::write_solved_sequence_to_file(&sequence, output_file)
-        }
+        Some(Commands::Solve { output_file, mode }) => match mode.as_str() {
+            "bruteforce" => {
+                let sequence = brute_force_find();
+                csv_writer::write_solved_sequence_to_file(&sequence, output_file)
+            }
+            _ => println!("Solver mode '{}' not recognised", mode),
+        },
         Some(Commands::Visualise { output_file }) => {
             // Setup some starting variables for the canvas
             let stitches = csv_reader::read_stitches_for_visualisation();
