@@ -1,5 +1,6 @@
 use crate::affixed_permutations::PrefixedPermutations;
-use crate::stitch::HalfStitch;
+use crate::closest_n_permutation::ClosestNElementsIterator;
+use crate::stitch::{HalfStitch, Location};
 use clap::{Parser, Subcommand};
 use factorial::Factorial;
 use gif::Encoder;
@@ -10,7 +11,7 @@ use image::{ImageBuffer, Rgba, RgbaImage};
 use imageproc::drawing::draw_line_segment_mut;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use rayon::prelude::*;
-use std::fs::File;
+use std::fs::{read, File};
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -35,6 +36,8 @@ enum Commands {
         output_file: PathBuf,
         #[arg(short, long, default_value = "bruteforce")]
         mode: String,
+        #[arg(short, long, default_value_t = 3)]
+        closest_n: usize,
     },
     Visualise {
         #[arg(short, long, default_value = "./output.gif")]
@@ -51,9 +54,17 @@ fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
-        Some(Commands::Solve { output_file, mode }) => match mode.as_str() {
-            "bruteforce" => {
+        Some(Commands::Solve {
+            output_file,
+            mode,
+            closest_n,
+        }) => match mode.as_str() {
+            "brute-force" => {
                 let sequence = brute_force_find();
+                csv_writer::write_solved_sequence_to_file(&sequence, output_file)
+            }
+            "closest-n" => {
+                let sequence = closest_n_find(*closest_n);
                 csv_writer::write_solved_sequence_to_file(&sequence, output_file)
             }
             _ => println!("Solver mode '{}' not recognised", mode),
@@ -189,12 +200,43 @@ fn brute_force_find() -> Vec<HalfStitch> {
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
 
+    process_best_result(&read_stitches.2, best)
+}
+
+fn closest_n_find(n_value: usize) -> Vec<HalfStitch> {
+    let read_stitches = csv_reader::read_stitches_for_solving();
+
+    let now = Instant::now();
+    let iterator = ClosestNElementsIterator::new(read_stitches.0, read_stitches.1, n_value);
+    let iterator_length = iterator.len() as u64;
+    let best = iterator
+        .par_bridge()
+        .progress_count(iterator_length)
+        .with_style(
+            ProgressStyle::with_template("[{elapsed_precise}] {wide_bar} {human_pos}/{human_len} ({percent}%) [{eta_precise}]")
+                .unwrap(),
+        )
+        .filter(|p| stitch::verify_stitches_valid(&p))
+        .min_by(|s1, s2| {
+            stitch::get_cost(s1, &read_stitches.2)
+                .total_cmp(&stitch::get_cost(s2, &read_stitches.2))
+        });
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
+
+    process_best_result(&read_stitches.2, best)
+}
+
+fn process_best_result(
+    final_location: &Option<Location>,
+    best: Option<Vec<HalfStitch>>,
+) -> Vec<HalfStitch> {
     match &best {
         None => {
             println!("No best sequence found, uh oh.")
         }
         Some(perm) => {
-            let best_cost = stitch::get_cost(&perm, &read_stitches.2);
+            let best_cost = stitch::get_cost(&perm, final_location);
             println!("Best cost: {}", best_cost);
             for stitch in perm {
                 println!("{:?}", stitch);
