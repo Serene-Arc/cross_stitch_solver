@@ -19,8 +19,8 @@ pub struct HalfStitch {
 
 impl Location {
     fn distance_to_location(&self, other: &Location) -> f64 {
-        let x_dist: f64 = (self.x as i64 - other.x as i64) as f64;
-        let y_dist: f64 = (self.y as i64 - other.y as i64) as f64;
+        let x_dist: f64 = (self.x - other.x) as f64;
+        let y_dist: f64 = (self.y - other.y) as f64;
         (x_dist * x_dist + y_dist * y_dist).sqrt()
     }
     pub fn new(x: i64, y: i64) -> Location {
