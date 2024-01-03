@@ -93,7 +93,7 @@ impl Iterator for ClosestNElementsIterator {
                 match self.first_location {
                     None => {}
                     Some(first_loc) => {
-                        out[0] = first_loc;
+                        out.push(first_loc);
                     }
                 }
                 for index in sequence {

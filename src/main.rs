@@ -34,7 +34,7 @@ enum Commands {
     Solve {
         #[arg(short, long, default_value = "./output.csv")]
         output_file: PathBuf,
-        #[arg(short, long, default_value = "brute-force")]
+        #[arg(short, long, default_value = "closest-n")]
         mode: String,
         #[arg(short, long, default_value_t = 3)]
         closest_n: usize,
