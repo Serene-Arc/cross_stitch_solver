@@ -62,7 +62,7 @@ impl ClosestNElementsIterator {
         n: usize,
         visited_stitches: &Vec<HalfStitch>,
     ) -> Option<HalfStitch> {
-        let mut closest_locations: Vec<HalfStitch> = self
+        let closest_locations: Vec<HalfStitch> = self
             .find_n_closest_stitches(location)
             .into_iter()
             .filter(|l| !visited_stitches.contains(l))
