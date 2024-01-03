@@ -43,7 +43,7 @@ impl<T: Clone + Hash + PartialEq + Eq> Iterator for PrefixedPermutations<T> {
 }
 #[cfg(test)]
 mod test {
-    use crate::csv_reader::generate_permutations;
+    use crate::affixed_permutations::PrefixedPermutations;
     use crate::stitch::{make_full_stitch, HalfStitch, Location};
     use crate::test_sequences::test_var_valid_sequence_kick;
 
@@ -55,7 +55,8 @@ mod test {
             HalfStitch::new(Location::new(3, 1), true),
             HalfStitch::new(Location::new(4, 1), true),
         ];
-        let perms = generate_permutations(Some(first), test);
+        let first_stitch = Some(first);
+        let perms = PrefixedPermutations::new(first_stitch, test);
         for p in perms {
             assert_eq!(p[0], first);
         }
@@ -68,7 +69,8 @@ mod test {
             HalfStitch::new(Location::new(2, 2), true),
             HalfStitch::new(Location::new(3, 1), true),
         ];
-        let perms = generate_permutations(None, test.clone());
+        let inner = test.clone();
+        let perms = PrefixedPermutations::new(None, inner);
 
         let mut is_different_first_elem_found = false;
         for perm in perms {
@@ -90,7 +92,8 @@ mod test {
             HalfStitch::new(Location::new(2, 2), true),
             HalfStitch::new(Location::new(3, 1), true),
         ];
-        let perms = generate_permutations(None, test.clone());
+        let inner = test.clone();
+        let perms = PrefixedPermutations::new(None, inner);
 
         let mut found = false;
         for perm in perms {
@@ -110,7 +113,8 @@ mod test {
             make_full_stitch(3, 2),
         ]
         .concat();
-        let perms = generate_permutations(None, test.clone());
+        let inner = test.clone();
+        let perms = PrefixedPermutations::new(None, inner);
 
         let expected = test_var_valid_sequence_kick();
         let mut found = false;

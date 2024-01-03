@@ -81,13 +81,6 @@ fn normalize_half_stitch_vec(stitches: Vec<HalfStitch>) -> Vec<HalfStitch> {
         .collect()
 }
 
-pub fn generate_permutations(
-    first_stitch: Option<HalfStitch>,
-    inner: Vec<HalfStitch>,
-) -> PrefixedPermutations<HalfStitch> {
-    PrefixedPermutations::new(first_stitch, inner)
-}
-
 #[cfg(test)]
 mod test {
     use crate::csv_reader::normalize_half_stitch_vec;

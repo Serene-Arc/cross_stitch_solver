@@ -1,3 +1,4 @@
+use crate::affixed_permutations::PrefixedPermutations;
 use crate::stitch::HalfStitch;
 use clap::{Parser, Subcommand};
 use factorial::Factorial;
@@ -170,7 +171,9 @@ fn brute_force_find() -> Vec<HalfStitch> {
 
     let now = Instant::now();
 
-    let best = csv_reader::generate_permutations(read_stitches.0, read_stitches.1)
+    let first_stitch = read_stitches.0;
+    let inner = read_stitches.1;
+    let best = PrefixedPermutations::new(first_stitch, inner)
         .par_bridge()
         .progress_count(number_of_stitches.factorial() as u64)
         .with_style(
