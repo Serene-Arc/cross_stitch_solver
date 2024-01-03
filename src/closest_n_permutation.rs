@@ -1,7 +1,6 @@
 use crate::stitch::HalfStitch;
 use itertools::{Itertools, MultiProduct};
 use std::collections::HashMap;
-use std::iter::repeat;
 use std::vec::IntoIter;
 
 pub struct ClosestNElementsIterator {
@@ -16,8 +15,11 @@ pub struct ClosestNElementsIterator {
 
 impl ClosestNElementsIterator {
     pub fn new(first_loc: HalfStitch, values: Vec<HalfStitch>, closest_n_value: usize) -> Self {
-        let iterator = repeat((0..closest_n_value).collect::<Vec<usize>>())
-            .take(values.len() - 1)
+        let initial_vec: Vec<usize> = (0..closest_n_value).collect();
+        let iterator = (0..values.len())
+            .map(|_| initial_vec.clone())
+            .collect::<Vec<Vec<usize>>>()
+            .into_iter()
             .multi_cartesian_product();
         Self {
             first_location: first_loc,
