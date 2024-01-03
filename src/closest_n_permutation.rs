@@ -61,18 +61,24 @@ impl ClosestNElementsIterator {
         location: &HalfStitch,
         n: usize,
         visited_stitches: &Vec<HalfStitch>,
-    ) -> HalfStitch {
-        let mut closest_locations = self
+    ) -> Option<HalfStitch> {
+        let mut closest_locations: Vec<HalfStitch> = self
             .find_n_closest_stitches(location)
             .into_iter()
-            .filter(|l| !visited_stitches.contains(l));
-        let out_location = closest_locations.nth(n);
+            .filter(|l| !visited_stitches.contains(l))
+            .collect();
+        if closest_locations.len() == 0 {
+            return None;
+        }
+        let out_location = closest_locations.get(n);
         match out_location {
-            None => closest_locations
-                .last()
-                .expect("Could not get last element of iterator")
-                .clone(),
-            Some(location) => location.clone(),
+            None => Some(
+                closest_locations
+                    .last()
+                    .expect("Could not get last element of iterator")
+                    .clone(),
+            ),
+            Some(location) => Some(location.clone()),
         }
     }
 }
@@ -88,11 +94,15 @@ impl Iterator for ClosestNElementsIterator {
                 let mut out = Vec::with_capacity(self.values.len() + 1);
                 out.push(self.first_location);
                 for index in sequence {
-                    out.push(self.get_nth_unused_closest_stitch(
+                    let next_possible_stitch = self.get_nth_unused_closest_stitch(
                         out.last().expect("Found an empty vector"),
                         index,
                         &out,
-                    ))
+                    );
+                    match next_possible_stitch {
+                        None => break,
+                        Some(stitch) => out.push(stitch),
+                    }
                 }
                 self.count += 1;
                 Some(out)
