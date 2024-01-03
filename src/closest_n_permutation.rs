@@ -8,13 +8,13 @@ pub struct ClosestNElementsIterator {
     cache: HashMap<Location, Vec<Location>>,
     closest_n_iterator: MultiProduct<IntoIter<usize>>,
     count: usize,
-    first_location: Location,
+    first_location: Option<Location>,
     n_value: usize,
     values: Vec<Location>,
 }
 
 impl ClosestNElementsIterator {
-    fn new(first_loc: Location, values: Vec<Location>, closest_n_value: usize) -> Self {
+    pub fn new(first_loc: Option<Location>, values: Vec<Location>, closest_n_value: usize) -> Self {
         let iterator = repeat((0..closest_n_value).collect::<Vec<usize>>())
             .take(values.len() - 1)
             .multi_cartesian_product();
@@ -80,8 +80,13 @@ impl Iterator for ClosestNElementsIterator {
         match n_sequence {
             None => None,
             Some(sequence) => {
-                let mut out = Vec::with_capacity(self.values.len());
-                out[0] = self.first_location.clone();
+                let mut out: Vec<Location> = Vec::with_capacity(self.values.len() + 1);
+                match self.first_location {
+                    None => {}
+                    Some(first_loc) => {
+                        out[0] = first_loc;
+                    }
+                }
                 for index in sequence {
                     out.push(self.get_nth_unused_closest_location(
                         out.last().expect("Found an empty vector"),
