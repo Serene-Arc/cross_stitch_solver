@@ -11,7 +11,7 @@ use image::{ImageBuffer, Rgba, RgbaImage};
 use imageproc::drawing::draw_line_segment_mut;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use rayon::prelude::*;
-use std::fs::{read, File};
+use std::fs::File;
 use std::path::PathBuf;
 use std::time::Instant;
 

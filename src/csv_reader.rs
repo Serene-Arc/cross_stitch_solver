@@ -1,4 +1,3 @@
-use crate::affixed_permutations::PrefixedPermutations;
 use crate::stitch::{make_full_stitch, HalfStitch, Location};
 use serde::Deserialize;
 use std::io;

@@ -1,4 +1,4 @@
-use crate::stitch::{HalfStitch, Location};
+use crate::stitch::HalfStitch;
 use itertools::{Itertools, MultiProduct};
 use std::collections::HashMap;
 use std::iter::repeat;
