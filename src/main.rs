@@ -14,6 +14,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 mod affixed_permutations;
+mod closest_n_permutation;
 mod csv_reader;
 mod csv_writer;
 mod stitch;
