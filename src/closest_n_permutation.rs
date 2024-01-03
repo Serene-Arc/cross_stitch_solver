@@ -1,20 +1,25 @@
-use crate::stitch::Location;
+use crate::stitch::{HalfStitch, Location};
 use itertools::{Itertools, MultiProduct};
 use std::collections::HashMap;
 use std::iter::repeat;
 use std::vec::IntoIter;
 
 pub struct ClosestNElementsIterator {
-    cache: HashMap<Location, Vec<Location>>,
+    // Cache of closest stitches to the end location of the given stitch, not including invalid stitches
+    cache: HashMap<HalfStitch, Vec<HalfStitch>>,
     closest_n_iterator: MultiProduct<IntoIter<usize>>,
     count: usize,
-    first_location: Option<Location>,
+    first_location: Option<HalfStitch>,
     n_value: usize,
-    values: Vec<Location>,
+    values: Vec<HalfStitch>,
 }
 
 impl ClosestNElementsIterator {
-    pub fn new(first_loc: Option<Location>, values: Vec<Location>, closest_n_value: usize) -> Self {
+    pub fn new(
+        first_loc: Option<HalfStitch>,
+        values: Vec<HalfStitch>,
+        closest_n_value: usize,
+    ) -> Self {
         let iterator = repeat((0..closest_n_value).collect::<Vec<usize>>())
             .take(values.len() - 1)
             .multi_cartesian_product();
@@ -27,8 +32,8 @@ impl ClosestNElementsIterator {
             cache: HashMap::new(),
         }
     }
-    fn find_n_closest_locations(&mut self, location: &Location) -> Vec<Location> {
-        if let Some(closest_points) = self.cache.get(location) {
+    fn find_n_closest_stitches(&mut self, stitch: &HalfStitch) -> Vec<HalfStitch> {
+        if let Some(closest_points) = self.cache.get(stitch) {
             return closest_points.clone();
         }
 
@@ -37,30 +42,34 @@ impl ClosestNElementsIterator {
             .iter()
             .map(|v| {
                 (
-                    (((v.x - location.x).pow(2) + (v.y - location.y).pow(2)) as f64).sqrt(),
-                    *v,
+                    (((v.start.x - stitch.get_end_location().x).pow(2)
+                        + (v.start.y - stitch.get_end_location().y).pow(2))
+                        as f64)
+                        .sqrt(),
+                    v.clone(),
                 )
             })
+            .filter(|l| l.1.start != stitch.get_end_location())
             .sorted_by(|a, b| a.0.partial_cmp(&b.0).unwrap())
-            .collect::<Vec<(f64, Location)>>();
+            .collect::<Vec<(f64, HalfStitch)>>();
 
-        let closest_points: Vec<Location> = distances.into_iter().map(|v| v.1).clone().collect();
+        let closest_points: Vec<HalfStitch> = distances.into_iter().map(|v| v.1).clone().collect();
 
-        self.cache.insert(*location, closest_points.clone());
+        self.cache.insert(*stitch, closest_points.clone());
 
         closest_points
     }
 
-    fn get_nth_unused_closest_location(
+    fn get_nth_unused_closest_stitch(
         &mut self,
-        location: &Location,
+        location: &HalfStitch,
         n: usize,
-        visited_locations: &Vec<Location>,
-    ) -> Location {
+        visited_stitches: &Vec<HalfStitch>,
+    ) -> HalfStitch {
         let mut closest_locations = self
-            .find_n_closest_locations(location)
+            .find_n_closest_stitches(location)
             .into_iter()
-            .filter(|l| !visited_locations.contains(l));
+            .filter(|l| !visited_stitches.contains(l));
         let out_location = closest_locations.nth(n);
         match out_location {
             None => closest_locations
@@ -73,14 +82,14 @@ impl ClosestNElementsIterator {
 }
 
 impl Iterator for ClosestNElementsIterator {
-    type Item = Vec<Location>;
+    type Item = Vec<HalfStitch>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let n_sequence = self.closest_n_iterator.next();
         match n_sequence {
             None => None,
             Some(sequence) => {
-                let mut out: Vec<Location> = Vec::with_capacity(self.values.len() + 1);
+                let mut out = Vec::with_capacity(self.values.len() + 1);
                 match self.first_location {
                     None => {}
                     Some(first_loc) => {
@@ -88,7 +97,7 @@ impl Iterator for ClosestNElementsIterator {
                     }
                 }
                 for index in sequence {
-                    out.push(self.get_nth_unused_closest_location(
+                    out.push(self.get_nth_unused_closest_stitch(
                         out.last().expect("Found an empty vector"),
                         index,
                         &out,
