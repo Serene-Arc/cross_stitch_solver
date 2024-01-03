@@ -207,8 +207,41 @@ fn closest_n_find(n_value: usize) -> Vec<HalfStitch> {
     let read_stitches = csv_reader::read_stitches_for_solving();
 
     let now = Instant::now();
-    let iterator = ClosestNElementsIterator::new(read_stitches.0, read_stitches.1, n_value);
-    let iterator_length = iterator.len() as u64;
+    let iterator_length: u64;
+    let iterator: Box<dyn Iterator<Item = Vec<HalfStitch>> + Send>;
+    match read_stitches.0 {
+        None => {
+            iterator_length = (read_stitches.1.len() * n_value * read_stitches.1.len()) as u64;
+            iterator = Box::new(
+                read_stitches
+                    .1
+                    .iter()
+                    .map(|s| {
+                        (
+                            s,
+                            read_stitches
+                                .1
+                                .iter()
+                                .filter(|s2| *s2 != s)
+                                .map(|s| s.clone())
+                                .collect::<Vec<HalfStitch>>(),
+                        )
+                    })
+                    .flat_map(|(start_stitch, stitch_vec)| {
+                        ClosestNElementsIterator::new(*start_stitch, stitch_vec, n_value)
+                    }),
+            );
+        }
+        Some(first_location) => {
+            iterator = Box::new(ClosestNElementsIterator::new(
+                first_location,
+                read_stitches.1.clone(),
+                n_value,
+            ));
+            iterator_length = (read_stitches.1.len() * n_value) as u64;
+        }
+    }
+    let cost_data = read_stitches.2.clone();
     let best = iterator
         .par_bridge()
         .progress_count(iterator_length)
@@ -218,7 +251,7 @@ fn closest_n_find(n_value: usize) -> Vec<HalfStitch> {
         )
         .filter(|p| stitch::verify_stitches_valid(&p))
         .min_by(|s1, s2| {
-            stitch::get_cost(s1, &read_stitches.2)
+            stitch::get_cost(s1, &cost_data)
                 .total_cmp(&stitch::get_cost(s2, &read_stitches.2))
         });
     let elapsed = now.elapsed();
