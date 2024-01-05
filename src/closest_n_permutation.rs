@@ -1,5 +1,6 @@
 use crate::stitch::HalfStitch;
 use itertools::{Itertools, MultiProduct};
+use num::Float;
 use std::collections::HashMap;
 use std::vec::IntoIter;
 
@@ -46,6 +47,10 @@ impl ClosestNElementsIterator {
                         .sqrt(),
                     v.clone(),
                 )
+            })
+            .map(|(dist, stitch)| match dist == 0.0 {
+                true => (f64::infinity(), stitch),
+                _ => (dist, stitch),
             })
             .sorted_by(|a, b| a.0.partial_cmp(&b.0).unwrap())
             .collect::<Vec<(f64, HalfStitch)>>();
