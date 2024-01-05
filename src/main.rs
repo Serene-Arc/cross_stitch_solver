@@ -36,7 +36,7 @@ enum Commands {
         output_file: PathBuf,
         #[arg(short, long, default_value = "closest-n")]
         mode: String,
-        #[arg(short, long, default_value_t = 3)]
+        #[arg(short, long, default_value_t = 2)]
         closest_n: usize,
     },
     Visualise {
@@ -191,7 +191,6 @@ fn brute_force_find() -> Vec<HalfStitch> {
             ProgressStyle::with_template("[{elapsed_precise}] {wide_bar} {human_pos}/{human_len} ({percent}%) [{eta_precise}]")
                 .unwrap(),
         )
-        .filter(|p| stitch::verify_stitches_valid(&p))
         .min_by(|s1, s2| {
             stitch::get_cost(s1, &read_stitches.2)
                 .total_cmp(&stitch::get_cost(s2, &read_stitches.2))
@@ -238,7 +237,7 @@ fn closest_n_find(n_value: usize) -> Vec<HalfStitch> {
                 read_stitches.1.clone(),
                 n_value,
             ));
-            iterator_length = (read_stitches.1.len() * n_value) as u64;
+            iterator_length = n_value.pow(read_stitches.1.len() as u32) as u64;
         }
     }
     let cost_data = read_stitches.2.clone();
@@ -249,7 +248,6 @@ fn closest_n_find(n_value: usize) -> Vec<HalfStitch> {
             ProgressStyle::with_template("[{elapsed_precise}] {wide_bar} {human_pos}/{human_len} ({percent}%) [{eta_precise}]")
                 .unwrap(),
         )
-        .filter(|p| stitch::verify_stitches_valid(&p))
         .min_by(|s1, s2| {
             stitch::get_cost(s1, &cost_data)
                 .total_cmp(&stitch::get_cost(s2, &read_stitches.2))

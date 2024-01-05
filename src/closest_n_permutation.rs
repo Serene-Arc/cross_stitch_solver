@@ -47,7 +47,6 @@ impl ClosestNElementsIterator {
                     v.clone(),
                 )
             })
-            .filter(|l| l.1.start != stitch.get_end_location())
             .sorted_by(|a, b| a.0.partial_cmp(&b.0).unwrap())
             .collect::<Vec<(f64, HalfStitch)>>();
 

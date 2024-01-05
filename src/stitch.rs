@@ -1,3 +1,4 @@
+use num::Float;
 use serde::de::{self, Deserializer, MapAccess, SeqAccess, Visitor};
 use serde::ser::{SerializeStruct, Serializer};
 use serde::{Deserialize, Serialize};
@@ -143,6 +144,9 @@ impl<'de> Deserialize<'de> for HalfStitch {
 }
 pub fn get_cost(stitches: &Vec<HalfStitch>, end_location: &Option<Location>) -> f64 {
     let mut cost: f64 = 0.0;
+    if !verify_stitches_valid(stitches) {
+        return f64::infinity();
+    }
     for window in stitches.windows(2) {
         cost += window[0]
             .get_end_location()
