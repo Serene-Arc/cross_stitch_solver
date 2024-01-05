@@ -36,7 +36,7 @@ enum Commands {
         output_file: PathBuf,
         #[arg(short, long, default_value = "closest-n")]
         mode: String,
-        #[arg(short, long, default_value_t = 2)]
+        #[arg(short, long, default_value_t = 3)]
         closest_n: usize,
     },
     Visualise {

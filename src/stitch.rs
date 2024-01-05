@@ -144,10 +144,12 @@ impl<'de> Deserialize<'de> for HalfStitch {
 }
 pub fn get_cost(stitches: &Vec<HalfStitch>, end_location: &Option<Location>) -> f64 {
     let mut cost: f64 = 0.0;
-    if !verify_stitches_valid(stitches) {
-        return f64::infinity();
-    }
+    let mut past_right_stitches: HashSet<Location> = HashSet::new();
     for window in stitches.windows(2) {
+        let valid_sequence = check_window_validity(&mut past_right_stitches, window);
+        if !valid_sequence {
+            return f64::infinity();
+        }
         cost += window[0]
             .get_end_location()
             .distance_to_location(&window[1].start);
@@ -178,19 +180,30 @@ pub fn get_cost(stitches: &Vec<HalfStitch>, end_location: &Option<Location>) -> 
 pub fn verify_stitches_valid(stitches: &Vec<HalfStitch>) -> bool {
     let mut past_right_stitches: HashSet<Location> = HashSet::new();
     for window in stitches.windows(2) {
-        if window[0].get_end_location() == window[1].start {
+        let value = check_window_validity(&mut past_right_stitches, window);
+        if !value {
             return false;
         }
+    }
+    true
+}
 
-        if !window[0].facing_right {
-            let bottom_stitch_location = Location::new(window[0].start.x - 1, window[0].start.y);
-            if !past_right_stitches.contains(&bottom_stitch_location) {
-                return false;
-            }
+fn check_window_validity(
+    past_right_stitches: &mut HashSet<Location>,
+    window: &[HalfStitch],
+) -> bool {
+    if window[0].get_end_location() == window[1].start {
+        return false;
+    }
+
+    if !window[0].facing_right {
+        let bottom_stitch_location = Location::new(window[0].start.x - 1, window[0].start.y);
+        if !past_right_stitches.contains(&bottom_stitch_location) {
+            return false;
         }
-        if window[0].facing_right {
-            past_right_stitches.insert(window[0].start);
-        }
+    }
+    if window[0].facing_right {
+        past_right_stitches.insert(window[0].start);
     }
     true
 }
