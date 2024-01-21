@@ -45,7 +45,7 @@ impl ClosestNElementsIterator {
                         + (v.start.y - stitch.get_end_location().y).pow(2))
                         as f64)
                         .sqrt(),
-                    v.clone(),
+                    *v,
                 )
             })
             .map(|(dist, stitch)| match dist == 0.0 {
@@ -73,18 +73,17 @@ impl ClosestNElementsIterator {
             .into_iter()
             .filter(|l| !visited_stitches.contains(l))
             .collect();
-        if closest_locations.len() == 0 {
+        if closest_locations.is_empty() {
             return None;
         }
         let out_location = closest_locations.get(n);
         match out_location {
             None => Some(
-                closest_locations
+                *closest_locations
                     .last()
-                    .expect("Could not get last element of iterator")
-                    .clone(),
+                    .expect("Could not get last element of iterator"),
             ),
-            Some(location) => Some(location.clone()),
+            Some(location) => Some(*location),
         }
     }
 }

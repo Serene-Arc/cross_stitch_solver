@@ -14,9 +14,9 @@ where
 impl<T: Clone + Hash + PartialEq + Eq> PrefixedPermutations<T> {
     pub fn new(prefix: Option<T>, inner: Vec<T>) -> Self {
         Self {
-            free_elements: { (&inner).len() as i64 },
+            free_elements: { inner.len() as i64 },
             prefix,
-            inner: inner.clone().into_iter().permutations((&inner).len()),
+            inner: inner.clone().into_iter().permutations(inner.len()),
         }
     }
 }

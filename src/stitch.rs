@@ -138,7 +138,7 @@ impl<'de> Deserialize<'de> for HalfStitch {
                 ))
             }
         }
-        const FIELDS: &'static [&'static str] = &["start_x", "start_y", "facing_right"];
+        const FIELDS: &[&str] = &["start_x", "start_y", "facing_right"];
         deserializer.deserialize_struct("HalfStitch", FIELDS, HalfStitchVisitor)
     }
 }
@@ -327,7 +327,7 @@ mod tests {
     fn test_check_stitches_valid_single_full() {
         let test: Vec<HalfStitch> = make_full_stitch(1, 1).to_vec();
         let result = verify_stitches_valid(&test);
-        assert_eq!(result, true);
+        assert!(result);
     }
 
     #[test]
@@ -335,14 +335,14 @@ mod tests {
         let mut test: Vec<HalfStitch> = make_full_stitch(1, 1).to_vec();
         test.reverse();
         let result = verify_stitches_valid(&test);
-        assert_eq!(result, false);
+        assert!(!result);
     }
 
     #[test]
     fn test_check_stitches_valid_two_full() {
         let test: Vec<HalfStitch> = [make_full_stitch(1, 1), make_full_stitch(2, 1)].concat();
         let result = verify_stitches_valid(&test);
-        assert_eq!(result, true);
+        assert!(result);
     }
 
     #[test]
@@ -352,7 +352,7 @@ mod tests {
             HalfStitch::new(Location::new(2, 2), true),
         ];
         let result = verify_stitches_valid(&test);
-        assert_eq!(result, false);
+        assert!(!result);
     }
 
     #[test]
@@ -364,7 +364,7 @@ mod tests {
             HalfStitch::new(Location::new(3, 2), false),
         ];
         let result = verify_stitches_valid(&test);
-        assert_eq!(result, true);
+        assert!(result);
     }
 
     #[test]
@@ -378,12 +378,12 @@ mod tests {
             HalfStitch::new(Location::new(4, 2), false), // ends 3,3
         ];
         let result = verify_stitches_valid(&test);
-        assert_eq!(result, true);
+        assert!(result);
     }
 
     #[test]
     fn test_check_stitches_valid_row_kick_2() {
         let result = verify_stitches_valid(&test_var_valid_sequence_kick());
-        assert_eq!(result, true);
+        assert!(result);
     }
 }

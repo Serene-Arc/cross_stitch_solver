@@ -72,12 +72,12 @@ fn main() {
         Some(Commands::Visualise { output_file }) => {
             // Setup some starting variables for the canvas
             let stitches = csv_reader::read_stitches_for_visualisation();
-            let max_x = (&stitches)
+            let max_x = stitches
                 .iter()
                 .map(|s| s.get_end_location().x)
                 .max()
                 .unwrap();
-            let max_y = (&stitches)
+            let max_y = stitches
                 .iter()
                 .map(|s| s.get_end_location().y)
                 .max()
@@ -178,7 +178,7 @@ fn make_background_with_stitch_points(
 
 fn brute_force_find() -> Vec<HalfStitch> {
     let read_stitches = csv_reader::read_stitches_for_solving();
-    let number_of_stitches: u128 = (&read_stitches).1.len() as u128;
+    let number_of_stitches: u128 = read_stitches.1.len() as u128;
 
     let now = Instant::now();
 
@@ -222,7 +222,7 @@ fn closest_n_find(n_value: usize) -> Vec<HalfStitch> {
                                 .1
                                 .iter()
                                 .filter(|s2| *s2 != s)
-                                .map(|s| s.clone())
+                                .copied()
                                 .collect::<Vec<HalfStitch>>(),
                         )
                     })
@@ -240,7 +240,7 @@ fn closest_n_find(n_value: usize) -> Vec<HalfStitch> {
             iterator_length = n_value.pow(read_stitches.1.len() as u32) as u64;
         }
     }
-    let cost_data = read_stitches.2.clone();
+    let cost_data = read_stitches.2;
     let best = iterator
         .par_bridge()
         .progress_count(iterator_length)
@@ -267,7 +267,7 @@ fn process_best_result(
             println!("No best sequence found, uh oh.")
         }
         Some(perm) => {
-            let best_cost = stitch::get_cost(&perm, final_location);
+            let best_cost = stitch::get_cost(perm, final_location);
             println!("Best cost: {}", best_cost);
             for stitch in perm {
                 println!("{:?}", stitch);

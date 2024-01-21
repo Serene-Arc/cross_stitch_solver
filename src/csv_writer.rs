@@ -1,7 +1,7 @@
 use crate::stitch::HalfStitch;
 use std::path::{Path, PathBuf};
 
-pub fn write_solved_sequence_to_file(sequence: &Vec<HalfStitch>, file_name: &PathBuf) -> () {
+pub fn write_solved_sequence_to_file(sequence: &Vec<HalfStitch>, file_name: &PathBuf) {
     let file = Path::new(&file_name);
     let mut writer = csv::Writer::from_path(file).expect("Make CSV writer");
     for stitch in sequence {
